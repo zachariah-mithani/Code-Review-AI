@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Review Widget</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .code-editor {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+        .line-numbers {
+            background: #334155;
+            color: #94a3b8;
+            padding: 1rem;
+            text-align: right;
+            user-select: none;
+        }
+        .code-input {
+            background: transparent;
+            color: #e2e8f0;
+            resize: none;
+            outline: none;
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+        .widget-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .issue-error { border-left: 4px solid #ef4444; }
+        .issue-warning { border-left: 4px solid #f59e0b; }
+        .issue-suggestion { border-left: 4px solid #3b82f6; }
+        .issue-optimization { border-left: 4px solid #10b981; }
+        .loading-spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="code-review-widget"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function CodeReviewWidget() {
+            const [code, setCode] = useState(`def analyze_data(data):
+    results = []
+    for item in data:
+        if item['status'] == 'active':
+            if item['score'] > 50:
+                item['category'] = 'high'
+            elif item['score'] > 20:
+                item['category'] = 'medium'
+            else:
+                item['category'] = 'low'
+            
+            # Calculate weighted score
+            weighted = item['score'] * 1.5
+            if weighted > 100:
+                weighted = 100
+            
+            results.append({
+                'id': item['id'],
+                'name': item['name'],
+                'category': item['category'],
+                'weighted_score': weighted,
+                'processed_at': str(datetime.now())
+            })
+    
+    return results
+
+# Usage example
+sample_data = [
+    {'id': 1, 'name': 'User A', 'score': 85, 'status': 'active'},
+    {'id': 2, 'name': 'User B', 'score': 45, 'status': 'inactive'},
+    {'id': 3, 'name': 'User C', 'score': 92, 'status': 'active'}
+]
+
+processed = analyze_data(sample_data)
+print(processed)`);
+            
+            const [language, setLanguage] = useState('python');
+            const [analysis, setAnalysis] = useState(null);
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+            const [error, setError] = useState(null);
+
+            const analyzeCode = async () => {
+                if (!code.trim()) {
+                    setError('Please enter some code to analyze');
+                    return;
+                }
+
+                setIsAnalyzing(true);
+                setError(null);
+                
+                try {
+                    // Simple rule-based analysis for demo
+                    const lines = code.split('\n');
+                    const issues = [];
+                    let qualityScore = 80;
+
+                    lines.forEach((line, index) => {
+                        const lineNum = index + 1;
+                        
+                        // JavaScript/TypeScript checks
+                        if (language === 'javascript' || language === 'typescript') {
+                            if (line.includes('var ')) {
+                                issues.push({
+                                    type: 'suggestion',
+                                    severity: 'low',
+                                    line: lineNum,
+                                    message: 'Consider using let or const instead of var',
+                                    category: 'Modern JavaScript'
+                                });
+                                qualityScore -= 5;
+                            }
+                            
+                            if (line.includes('==') && !line.includes('===')) {
+                                issues.push({
+                                    type: 'warning',
+                                    severity: 'medium',
+                                    line: lineNum,
+                                    message: 'Use strict equality (===) instead of loose equality (==)',
+                                    category: 'Best Practices'
+                                });
+                                qualityScore -= 10;
+                            }
+                            
+                            if (line.includes('console.log')) {
+                                issues.push({
+                                    type: 'warning',
+                                    severity: 'low',
+                                    line: lineNum,
+                                    message: 'Remove console.log statements in production code',
+                                    category: 'Code Quality'
+                                });
+                                qualityScore -= 5;
+                            }
+                        }
+                        
+                        // Python checks
+                        if (language === 'python') {
+                            if (line.trim().startsWith('import ') && lineNum > 10) {
+                                issues.push({
+                                    type: 'suggestion',
+                                    severity: 'low',
+                                    line: lineNum,
+                                    message: 'Imports should be at the top of the file',
+                                    category: 'PEP 8 Style'
+                                });
+                                qualityScore -= 5;
+                            }
+                        }
+                        
+                        // General checks
+                        if (line.length > 120) {
+                            issues.push({
+                                type: 'suggestion',
+                                severity: 'low',
+                                line: lineNum,
+                                message: 'Line is too long (>120 characters)',
+                                category: 'Code Style'
+                            });
+                            qualityScore -= 2;
+                        }
+                    });
+
+                    // Simulate API delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const analysisResult = {
+                        qualityScore: Math.max(0, qualityScore),
+                        issues,
+                        summary: {
+                            totalIssues: issues.length,
+                            errorCount: issues.filter(i => i.type === 'error').length,
+                            warningCount: issues.filter(i => i.type === 'warning').length,
+                            suggestionCount: issues.filter(i => i.type === 'suggestion').length,
+                            optimizationCount: issues.filter(i => i.type === 'optimization').length,
+                        }
+                    };
+
+                    setAnalysis(analysisResult);
+                } catch (err) {
+                    setError('Analysis failed. Please try again.');
+                } finally {
+                    setIsAnalyzing(false);
+                }
+            };
+
+            const getIssueColor = (type) => {
+                switch (type) {
+                    case 'error': return 'text-red-600';
+                    case 'warning': return 'text-yellow-600';
+                    case 'suggestion': return 'text-blue-600';
+                    case 'optimization': return 'text-green-600';
+                    default: return 'text-gray-600';
+                }
+            };
+
+            const getIssueIcon = (type) => {
+                switch (type) {
+                    case 'error': return '🔴';
+                    case 'warning': return '🟡';
+                    case 'suggestion': return '🔵';
+                    case 'optimization': return '🟢';
+                    default: return '⚪';
+                }
+            };
+
+            const lineCount = code.split('\n').length;
+            const charCount = code.length;
+
+            return (
+                <div className="widget-container">
+                    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+                            <h2 className="text-2xl font-bold">🤖 AI Code Review Assistant</h2>
+                            <p className="text-blue-100">Analyze your code for issues and improvements</p>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Code Input */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold">Code Input</h3>
+                                        <div className="flex items-center space-x-2">
+                                            <label className="text-sm font-medium">Language:</label>
+                                            <select
+                                                value={language}
+                                                onChange={(e) => setLanguage(e.target.value)}
+                                                className="border rounded px-2 py-1"
+                                            >
+                                                <option value="javascript">JavaScript</option>
+                                                <option value="python">Python</option>
+                                                <option value="typescript">TypeScript</option>
+                                                <option value="java">Java</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="code-editor rounded-lg overflow-hidden mb-4">
+                                        <textarea
+                                            value={code}
+                                            onChange={(e) => setCode(e.target.value)}
+                                            className="code-input w-full h-96 p-4 text-sm"
+                                            placeholder="Paste your code here..."
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <button
+                                            onClick={analyzeCode}
+                                            disabled={isAnalyzing}
+                                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                                        >
+                                            {isAnalyzing && <div className="loading-spinner"></div>}
+                                            <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Code'}</span>
+                                        </button>
+                                        <div className="text-sm text-gray-500">
+                                            {lineCount} lines • {charCount} characters
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Analysis Results */}
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-4">Analysis Results</h3>
+                                    
+                                    {error && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                            <p className="text-red-700">{error}</p>
+                                        </div>
+                                    )}
+
+                                    {analysis ? (
+                                        <div className="space-y-4">
+                                            {/* Quality Score */}
+                                            <div className="bg-gray-50 rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="font-medium">Quality Score</span>
+                                                    <span className="text-2xl font-bold text-green-600">
+                                                        {analysis.qualityScore}%
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                                        style={{width: `${analysis.qualityScore}%`}}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Summary */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                                                    <div className="text-xl font-bold">{analysis.summary.totalIssues}</div>
+                                                    <div className="text-sm text-gray-600">Total Issues</div>
+                                                </div>
+                                                <div className="bg-gray-50 rounded-lg p-3 text-center">
+                                                    <div className="text-xl font-bold">{analysis.summary.suggestionCount}</div>
+                                                    <div className="text-sm text-gray-600">Suggestions</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Issues List */}
+                                            {analysis.issues.length > 0 && (
+                                                <div>
+                                                    <h4 className="font-medium mb-2">Issues & Suggestions</h4>
+                                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                        {analysis.issues.map((issue, index) => (
+                                                            <div
+                                                                key={index}
+                                                                className={`p-3 rounded-lg border-l-4 bg-white issue-${issue.type}`}
+                                                            >
+                                                                <div className="flex items-start space-x-2">
+                                                                    <span className="text-lg">{getIssueIcon(issue.type)}</span>
+                                                                    <div className="flex-1">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className={`font-medium ${getIssueColor(issue.type)}`}>
+                                                                                {issue.category}
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                Line {issue.line}
+                                                                            </span>
+                                                                        </div>
+                                                                        <p className="text-sm text-gray-700 mt-1">
+                                                                            {issue.message}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {analysis.issues.length === 0 && (
+                                                <div className="text-center py-8 text-gray-500">
+                                                    <div className="text-4xl mb-2">🎉</div>
+                                                    <p>Great job! No issues found in your code.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <div className="text-4xl mb-4">💻</div>
+                                            <p>Click "Analyze Code" to get started</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gray-50 px-6 py-4 border-t">
+                            <div className="flex items-center justify-between text-sm text-gray-600">
+                                <span>Powered by AI Code Review Assistant</span>
+                                <span>Free • Open Source • Privacy First</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CodeReviewWidget />, document.getElementById('code-review-widget'));
+    </script>
+</body>
+</html>
