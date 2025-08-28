@@ -2,10 +2,6 @@
 
 An intelligent **code review assistant** that analyzes code quality, detects issues, and provides optimization suggestions. Features **rule-based checks**, **AI-assisted insights**, **syntax-highlighted diffs**, and **exportable reports**.
 
-<p align="center">
-  <img alt="CodeReviewAI" src="docs/cover.png" width="75%"/>
-</p>
-
 ---
 
 ## ✨ Features
