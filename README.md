@@ -25,5 +25,5 @@ An intelligent **code review assistant** that analyzes code quality, detects iss
 ---
 
 ## Preview
-<img width="1010" height="745" alt="Screenshot 2025-08-29 at 2 38 38 AM" src="https://github.com/user-attachments/assets/7bce4b3b-1df5-4864-b450-3bb665a06628" />
+<img width="603" height="685" alt="Screenshot 2025-08-29 at 3 30 01 AM" src="https://github.com/user-attachments/assets/99d1902d-1c87-49eb-8a59-779e7b22759e" />
 
