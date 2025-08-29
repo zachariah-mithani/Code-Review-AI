@@ -4,18 +4,18 @@ An intelligent **code review assistant** that analyzes code quality, detects iss
 
 ---
 
-## ✨ Features
-- 🔎 **Static analysis & rule-based checks** (style, complexity, maintainability)
-- 🧠 **AI suggestions** for refactoring, naming, and readability
-- 🧾 **Reports** exportable to **Markdown/PDF**
-- 🧩 **Language-aware parsing** with syntax highlighting
-- 🔁 **Diff view**: before/after suggestions
-- ⚙️ **Configurable rules** per project
-- 🌐 **Modern UI**: React + TypeScript
+## Features
+- **Static analysis & rule-based checks** (style, complexity, maintainability)
+- **AI suggestions** for refactoring, naming, and readability
+- **Reports** exportable to **Markdown/PDF**
+- **Language-aware parsing** with syntax highlighting
+- **Diff view**: before/after suggestions
+- **Configurable rules** per project
+- **Modern UI**: React + TypeScript
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 - **Frontend:** React, TypeScript
 - **Styling:** Tailwind CSS (or CSS Modules)
 - **State / Data:** React Query (or SWR)
